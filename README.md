@@ -1,141 +1,55 @@
-# EdgeVision — On-Device Intelligence & Offline Edge AI
+# EdgeVision
 
-> COMP4310 Mobile Software Development — Birzeit University  
-> Group 2 | Assignment #2 Prototype
+COMP4310 Mobile Software Development
+Birzeit University, Group 2, Assignment 2
 
-A Flutter application that performs **real-time object detection entirely on-device** using Google ML Kit — no internet connection required. This prototype demonstrates the core concepts of On-Device Intelligence and Offline Edge AI on Android.
+## What this is
 
----
+A small Flutter app that does object detection through the phone camera. Runs locally so it still works in airplane mode.
 
-## What It Does
+## How it works
 
-Point your phone camera at any object and the app instantly identifies it — drawing bounding boxes, displaying classification labels and confidence scores, and showing the inference time in milliseconds. Everything runs locally on the device with zero cloud communication.
+The camera frames go through Google ML Kit. ML Kit runs a TensorFlow Lite model called object_labeler.tflite (around 3.7 MB) that we bundled inside the assets folder. For each frame the model classifies what is in the picture and the app draws a box around the object with a label like Clothing or Plant on top.
 
----
+## Stuff we used
 
-## Features
+Flutter and Dart, Google ML Kit (the google_mlkit_object_detection package), the camera package for the live feed, provider for state, permission_handler for the camera popup, and path_provider to copy the model out of the assets folder so ML Kit can load it from a real file path.
 
-- **Offline object detection** — works with airplane mode on
-- **Real-time camera feed** — live bounding boxes rendered on every frame
-- **Confidence scores** — shows prediction certainty per detected object (e.g. `Person 94%`)
-- **Inference timer** — displays on-device processing time in ms
-- **ON-DEVICE badge** — visual indicator confirming no network is used
-- **Runtime camera permission** — clean permission flow before camera access
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Flutter (Dart) |
-| ML Engine | Google ML Kit Object Detection |
-| Camera | camera package (CameraX) |
-| Architecture | MVVM + Repository Pattern |
-| State Management | Provider (ChangeNotifier) |
-| Permissions | permission_handler |
-
----
-
-## Architecture
-
-The app follows **MVVM (Model-View-ViewModel)** with a Repository layer, cleanly separating UI, business logic, and ML inference:
+## Project layout
 
 ```
 lib/
-├── main.dart                          # App entry point, Provider setup
-├── data/
-│   ├── models/
-│   │   └── detection_result.dart     # DetectionResult model (label, confidence, boundingBox)
-│   └── ml_repository.dart            # ML Kit wrapper, YUV→NV21 conversion, inference
-├── viewmodel/
-│   └── detection_viewmodel.dart      # CameraController lifecycle, frame processing loop
-└── view/
-    ├── camera_screen.dart            # Camera preview + overlays (UI layer)
-    └── widgets/
-        └── bounding_box_painter.dart # CustomPainter — draws boxes and labels
+  main.dart                              app entry
+  data/
+    ml_repository.dart                   loads the tflite model and runs detection
+    models/detection_result.dart         small data class
+  viewmodel/
+    detection_viewmodel.dart             camera lifecycle and frame loop
+  view/
+    camera_screen.dart                   main screen
+    widgets/bounding_box_painter.dart    draws the boxes
+assets/
+  ml/object_labeler.tflite               the model
 ```
 
-### Data Flow
+## Running it
+
+Needs Flutter and an Android phone or emulator.
 
 ```
-Camera Frame (YUV_420_888)
-        ↓
-MLRepository — converts to NV21, feeds ML Kit
-        ↓
-Google ML Kit — on-device inference (NPU/GPU)
-        ↓
-DetectionViewModel — updates state via ChangeNotifier
-        ↓
-CameraScreen — repaints BoundingBoxPainter
-        ↓
-User sees result in < 30ms
-```
-
----
-
-## Getting Started
-
-### Requirements
-
-- Flutter SDK 3.x+
-- Android device or emulator (API 21+)
-- Android Studio or VS Code
-
-### Run the App
-
-```bash
-# Clone the repo
-git clone https://github.com/Okmenahm1/TensorFlow-lite-Prototype.git
-cd TensorFlow-lite-Prototype
-
-# Install dependencies
 flutter pub get
-
-# Run on connected Android device
 flutter run
 ```
 
-On first launch the app will request camera permission. Grant it and point the camera at any object.
+It asks for camera permission once then you can point it at things.
 
----
+## Heads up
 
-## Key Dependencies
-
-```yaml
-camera: ^0.11.0                        # Live camera feed via CameraX
-google_mlkit_object_detection: ^0.13.0 # On-device ML inference
-provider: ^6.1.2                       # MVVM state management
-permission_handler: ^11.3.1            # Runtime camera permission
-```
-
----
-
-## Edge AI vs Cloud AI
-
-| Feature | Cloud AI | Edge AI (This App) |
-|---|---|---|
-| Internet Required | Yes | **No** |
-| Latency | 100ms – seconds | **< 30ms** |
-| Privacy | Data sent to server | **Data stays on device** |
-| Offline Support | No | **Yes** |
-| Infrastructure Cost | High | **None** |
-
----
+The model is tiny so accuracy is not great. A lighter sometimes shows up as a water bottle, a water bottle as tableware, etc. The labels are very general too (Clothing, Food, Plant, Home good, things like that). A bigger model would do better but would also make the apk way heavier so we kept this one.
 
 ## Team
 
-| Name | Student ID | Role |
-|---|---|---|
-| Ahmad Hamza | 1210381 | Research & Literature Review |
-| Tala Khateeb | 1222091 | Technical Architecture Analysis |
-| Laith Amro | 1230018 | Prototype Implementation |
-| Mohammad Aljamal | 1220378 | Documentation & Presentation |
-
----
-
-## Course
-
-**COMP4310 — Mobile Software Development**  
-Faculty of Engineering and Technology, Computer Science Department  
-Birzeit University — June 2026
+Ahmad Hamza 1210381
+Tala Khateeb 1222091
+Laith Amro 1230018
+Mohammad Aljamal 1220378
